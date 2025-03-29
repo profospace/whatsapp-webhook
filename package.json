@@ -1,0 +1,23 @@
+{
+    "name": "simple-whatsapp-webhook",
+    "version": "1.0.0",
+    "description": "Simple WhatsApp webhook that responds to messages",
+    "main": "updated-whatsapp-webhook.js",
+    "scripts": {
+        "start": "node updated-whatsapp-webhook.js",
+        "dev": "nodemon updated-whatsapp-webhook.js"
+    },
+    "dependencies": {
+        "body-parser": "^1.20.3",
+        "dotenv": "^16.4.7",
+        "express": "^4.21.2",
+        "node-fetch": "^3.3.2"
+    },
+    "devDependencies": {
+        "nodemon": "^3.0.1"
+    },
+    "engines": {
+        "node": ">=16.0.0"
+    },
+    "type": "module"
+}
