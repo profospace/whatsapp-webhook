@@ -989,9 +989,8 @@ app.get('/webhook', (req, res) => {
   return res.status(200).send('WhatsApp Webhook is running.');
 });
 
-// POST route for webhook events (receiving messages)
 app.post('/webhook', (req, res) => {
-  // Return a 200 OK response to acknowledge receipt
+  // Return a 200 OK response immediately to acknowledge receipt
   res.status(200).send('EVENT_RECEIVED');
   
   const body = req.body;
@@ -1004,46 +1003,140 @@ app.post('/webhook', (req, res) => {
     if (body.object === 'whatsapp_business_account') {
       if (body.entry && 
           body.entry[0].changes && 
-          body.entry[0].changes[0] && 
-          body.entry[0].changes[0].value.messages && 
-          body.entry[0].changes[0].value.messages[0]) {
+          body.entry[0].changes[0]) {
         
-        // Get the phone number ID from the webhook payload
-        const phoneNumberId = body.entry[0].changes[0].value.metadata.phone_number_id;
-        const from = body.entry[0].changes[0].value.messages[0].from;
-        let message = '';
+        const change = body.entry[0].changes[0];
+        const field = change.field;
+        const value = change.value;
         
-        // Check message type (text or interactive)
-        if (body.entry[0].changes[0].value.messages[0].type === 'text') {
-          message = body.entry[0].changes[0].value.messages[0].text.body;
-        } else if (body.entry[0].changes[0].value.messages[0].type === 'interactive') {
-          // Handle button clicks or list selections
-          const interactiveType = body.entry[0].changes[0].value.messages[0].interactive.type;
+        console.log(`📊 Processing webhook field: ${field}`);
+        
+        // Handle different types of webhook notifications
+        switch (field) {
+          case 'messages':
+            if (value.messages && value.messages[0]) {
+              // Handle messages
+              const phoneNumberId = value.metadata.phone_number_id;
+              const from = value.messages[0].from;
+              let message = '';
+              
+              // Check message type (text or interactive)
+              if (value.messages[0].type === 'text') {
+                message = value.messages[0].text.body;
+                console.log(`📝 Received text message: "${message}"`);
+              } else if (value.messages[0].type === 'interactive') {
+                // Handle button clicks or list selections
+                const interactiveType = value.messages[0].interactive.type;
+                
+                if (interactiveType === 'button_reply') {
+                  message = value.messages[0].interactive.button_reply.id;
+                  console.log(`🔘 Received button reply: ${message}`);
+                } else if (interactiveType === 'list_reply') {
+                  message = value.messages[0].interactive.list_reply.id;
+                  console.log(`📋 Received list selection: ${message}`);
+                }
+              } else {
+                // Handle other message types (image, video, audio, etc.)
+                console.log(`📦 Received message of type: ${value.messages[0].type}`);
+                message = `[${value.messages[0].type} message]`;
+              }
+              
+              console.log(`📱 Processing message from ${from}: ${message}`);
+              
+              // Process the message through the conversation flow
+              processMessage(phoneNumberId, from, message)
+                .catch(error => console.error('❌ Error processing message:', error));
+            } else if (value.statuses && value.statuses[0]) {
+              // Handle message status updates
+              const status = value.statuses[0].status;
+              const messageId = value.statuses[0].id;
+              
+              console.log(`📊 Message status update: ${messageId} is now ${status}`);
+              
+              // You can implement specific handling for different statuses
+              switch (status) {
+                case 'sent':
+                  console.log(`✅ Message ${messageId} was sent`);
+                  break;
+                case 'delivered':
+                  console.log(`📬 Message ${messageId} was delivered`);
+                  break;
+                case 'read':
+                  console.log(`👁️ Message ${messageId} was read`);
+                  break;
+                case 'failed':
+                  console.error(`❌ Message ${messageId} failed to deliver`);
+                  // You might want to retry or notify admins
+                  if (value.statuses[0].errors) {
+                    console.error('Error details:', value.statuses[0].errors);
+                  }
+                  break;
+              }
+            }
+            break;
+            
+          case 'account_alerts':
+            // Handle account alerts
+            console.log(`📢 Account alert received: ${value.alert_type}`);
+            console.log('Alert details:', JSON.stringify(value, null, 2));
+            
+            // Handle specific alert types
+            switch (value.alert_type) {
+              case 'OBA_APPROVED':
+                console.log('✅ Official Business Account has been approved!');
+                // Trigger any OBA approval related actions
+                // Example: updateAccountStatus('approved');
+                break;
+              case 'ACCOUNT_REVIEW':
+                console.log('⚠️ Account is under review');
+                break;
+              case 'ACCOUNT_UPDATE':
+                console.log('ℹ️ Account has been updated');
+                break;
+              default:
+                console.log(`ℹ️ Received alert type: ${value.alert_type}`);
+            }
+            break;
+            
+          case 'message_template_status_update':
+            // Handle template status updates
+            console.log(`📋 Template status update received`);
+            console.log('Template details:', JSON.stringify(value, null, 2));
+            
+            // You can update your template database/cache based on these updates
+            // Example: updateTemplateStatus(value.message_template_id, value.status);
+            break;
           
-          if (interactiveType === 'button_reply') {
-            message = body.entry[0].changes[0].value.messages[0].interactive.button_reply.id;
-          } else if (interactiveType === 'list_reply') {
-            message = body.entry[0].changes[0].value.messages[0].interactive.list_reply.id;
-          }
+          case 'phone_number_quality_update':
+            // Handle phone number quality updates
+            console.log(`📱 Phone number quality update received`);
+            console.log('Quality details:', JSON.stringify(value, null, 2));
+            break;
+            
+          case 'phone_number_name_update':
+            // Handle phone number name updates
+            console.log(`📱 Phone number name update received`);
+            console.log('Name update details:', JSON.stringify(value, null, 2));
+            break;
+            
+          default:
+            // Log other types of webhooks that we're not handling specifically
+            console.log(`⚠️ Received webhook with unknown field type: ${field}`);
+            console.log('Value:', JSON.stringify(value, null, 2));
         }
-        
-        console.log(`📝 Processing message from ${from}: ${message}`);
-        
-        // Process the message
-        processMessage(phoneNumberId, from, message)
-          .catch(error => console.error('❌ Error processing message:', error));
       } else {
-        console.log('⚠️ Received webhook but no message found in the structure');
-        console.log('Full webhook body:', JSON.stringify(body, null, 2));
+        console.log('⚠️ Received webhook with incomplete structure');
+        console.log('Body:', JSON.stringify(body, null, 2));
       }
     } else {
       console.log(`⚠️ Webhook received with object type: ${body.object || 'undefined'}`);
     }
   } catch (error) {
     console.error('❌ Error processing webhook:', error);
+    console.error('Error stack:', error.stack);
+    console.error('Request body:', JSON.stringify(body, null, 2));
   }
 });
-
 /**
  * Process incoming messages and manage conversation flow
  */
