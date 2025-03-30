@@ -27,24 +27,39 @@ const WHATSAPP_PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID || '598241
 const WHATSAPP_ACCESS_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN || 'EAAIAmB3mH3EBO5zWW5FcNWj4lG5SqOJ5FYM1oU2oUsSGY82kfX0ThZCf4bnd1MLjrtLaLRULaNKMF4r7c88HlJaYwnDHhFVCNJkVjseVoQwLjzFANz5ZBZA4D9I8hSZA3bfR5kMJ2NTyfwyov8neqCYFRqO5oZBLLCP2Q3VvZBkyZAgDXcZAJUZAsZAV4v7cR0FrzFugZDZD';
 const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN ;
 
-// GET route for webhook verification
+
 app.get('/webhook', (req, res) => {
   // Parse parameters from the webhook verification request
   const mode = req.query['hub.mode'];
   const token = req.query['hub.verify_token'];
   const challenge = req.query['hub.challenge'];
   
+  console.log('=== WEBHOOK VERIFICATION REQUEST ===');
+  console.log(`Timestamp: ${new Date().toISOString()}`);
+  console.log(`Request URL: ${req.originalUrl}`);
+  console.log(`hub.mode: ${mode}`);
+  console.log(`hub.verify_token: ${token}`);
+  console.log(`hub.challenge: ${challenge}`);
+  console.log(`Expected verify_token: ${VERIFY_TOKEN}`);
+  console.log(`Environment variable WHATSAPP_VERIFY_TOKEN: ${process.env.WHATSAPP_VERIFY_TOKEN}`);
+  
   // Check if a token and mode were sent
   if (mode && token) {
     // Check the mode and token sent match your configuration
     if (mode === 'subscribe' && token === VERIFY_TOKEN) {
       // Respond with the challenge token from the request
-      console.log('WEBHOOK_VERIFIED');
+      console.log('✅ WEBHOOK_VERIFIED: Token match successful');
       return res.status(200).send(challenge);
     }
     // Respond with 403 Forbidden if verify tokens do not match
+    console.log('❌ VERIFICATION FAILED: Token does not match');
+    console.log(`Received: "${token}" vs Expected: "${VERIFY_TOKEN}"`);
     return res.sendStatus(403);
   }
+  
+  // If no mode or token parameters were provided, return a simple message
+  console.log('⚠️ No verification parameters provided, sending default response');
+  return res.status(200).send('WhatsApp Webhook is running. Add hub.mode, hub.verify_token, and hub.challenge parameters for verification.');
 });
 
 // POST route for handling webhook events
