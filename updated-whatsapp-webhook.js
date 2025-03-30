@@ -267,26 +267,29 @@ app.get('/webhook', (req, res) => {
 });
 
 app.get('/webhook', (req, res) => {
-  // Parse parameters from the webhook verification request
   const mode = req.query['hub.mode'];
   const token = req.query['hub.verify_token'];
   const challenge = req.query['hub.challenge'];
   
-  // Check if a token and mode were sent
+  console.log('Webhook GET request received');
+  console.log('Mode:', mode);
+  console.log('Token:', token);
+  console.log('Challenge:', challenge);
+  console.log('Expected token:', VERIFY_TOKEN);
+  
   if (mode && token) {
-    // Check the mode and token sent match your configuration
     if (mode === 'subscribe' && token === VERIFY_TOKEN) {
-      // Respond with the challenge token from the request
       console.log('WEBHOOK_VERIFIED');
       return res.status(200).send(challenge);
     }
-    // Respond with 403 Forbidden if verify tokens do not match
+    console.log('Token verification failed');
     return res.sendStatus(403);
   }
   
-  // Return a simple message for direct browser access
-  return res.status(200).send('WhatsApp Webhook is running. This endpoint is for WhatsApp API webhook verification.');
+  console.log('Missing mode or token');
+  return res.status(200).send('WhatsApp Webhook is running.');
 });
+
 /**
  * Process incoming messages and manage conversation flow
  */
