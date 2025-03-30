@@ -266,54 +266,27 @@ app.get('/webhook', (req, res) => {
   }
 });
 
-// POST route for handling webhook events
-app.post('/webhook', async (req, res) => {
-  // Return a '200 OK' response right away to acknowledge receipt
-  res.status(200).send('EVENT_RECEIVED');
+app.get('/webhook', (req, res) => {
+  // Parse parameters from the webhook verification request
+  const mode = req.query['hub.mode'];
+  const token = req.query['hub.verify_token'];
+  const challenge = req.query['hub.challenge'];
   
-  const body = req.body;
-  
-  console.log('Received webhook payload:', JSON.stringify(body, null, 2));
-  
-  // Check if this is a WhatsApp message notification
-  if (body.object && 
-      body.entry && 
-      body.entry[0].changes && 
-      body.entry[0].changes[0] && 
-      body.entry[0].changes[0].value.messages && 
-      body.entry[0].changes[0].value.messages[0]) {
-    
-    const phoneNumberId = body.entry[0].changes[0].value.metadata.phone_number_id;
-    const from = body.entry[0].changes[0].value.messages[0].from; // extract the phone number from the webhook payload
-    const messageType = body.entry[0].changes[0].value.messages[0].type; // extract the message type
-    const messageId = body.entry[0].changes[0].value.messages[0].id; // unique message id
-    
-    let messageBody = '';
-    if (messageType === 'text') {
-      messageBody = body.entry[0].changes[0].value.messages[0].text.body; // extract the message text
-    } else if (messageType === 'interactive') {
-      // Handle button or list responses
-      const interactiveData = body.entry[0].changes[0].value.messages[0].interactive;
-      if (interactiveData.type === 'button_reply') {
-        messageBody = interactiveData.button_reply.id;
-      } else if (interactiveData.type === 'list_reply') {
-        messageBody = interactiveData.list_reply.id;
-      }
-    } else {
-      messageBody = `[${messageType} message]`;
+  // Check if a token and mode were sent
+  if (mode && token) {
+    // Check the mode and token sent match your configuration
+    if (mode === 'subscribe' && token === VERIFY_TOKEN) {
+      // Respond with the challenge token from the request
+      console.log('WEBHOOK_VERIFIED');
+      return res.status(200).send(challenge);
     }
-    
-    console.log(`Received message: "${messageBody}" from ${from}`);
-    
-    try {
-      // Process the message and generate a response
-      await processMessage(phoneNumberId, from, messageBody);
-    } catch (error) {
-      console.error('Error processing message:', error);
-    }
+    // Respond with 403 Forbidden if verify tokens do not match
+    return res.sendStatus(403);
   }
+  
+  // Return a simple message for direct browser access
+  return res.status(200).send('WhatsApp Webhook is running. This endpoint is for WhatsApp API webhook verification.');
 });
-
 /**
  * Process incoming messages and manage conversation flow
  */
