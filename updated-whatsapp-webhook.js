@@ -918,21 +918,17 @@
 // });
 
 
-
 import express from 'express';
 import bodyParser from 'body-parser';
 import fetch from 'node-fetch';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import path from 'path';
-
 // Load environment variables
 dotenv.config();
-
 // Initialize express app
 const app = express();
 const PORT = process.env.PORT || 3100;
-
 // Add request logging middleware
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`, {
@@ -941,29 +937,23 @@ app.use((req, res, next) => {
   });
   next();
 });
-
 // Parse JSON request body
 app.use(bodyParser.json());
-
 // WhatsApp API Configuration
-const WHATSAPP_API_VERSION = process.env.WHATSAPP_API_VERSION || 'v18.0';
+const WHATSAPP_API_VERSION = process.env.WHATSAPP_API_VERSION ;
 const WHATSAPP_PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID;
 const WHATSAPP_ACCESS_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN;
 const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN;
-
 // Log configuration on startup
 console.log('Starting with configuration:');
 console.log(`API Version: ${WHATSAPP_API_VERSION}`);
 console.log(`Phone Number ID: ${WHATSAPP_PHONE_NUMBER_ID ? 'Set' : 'NOT SET (CRITICAL)'}`);
 console.log(`Access Token: ${WHATSAPP_ACCESS_TOKEN ? 'Set' : 'NOT SET (CRITICAL)'}`);
 console.log(`Verify Token: ${VERIFY_TOKEN ? 'Set' : 'NOT SET (CRITICAL)'}`);
-
 // In-memory user session storage
 const userSessions = new Map();
-
 // Session TTL in milliseconds (30 minutes)
 const SESSION_TTL = 30 * 60 * 1000;
-
 // GET route for webhook verification
 app.get('/webhook', (req, res) => {
   const mode = req.query['hub.mode'];
@@ -988,7 +978,6 @@ app.get('/webhook', (req, res) => {
   console.log('Missing mode or token');
   return res.status(200).send('WhatsApp Webhook is running.');
 });
-
 app.post('/webhook', (req, res) => {
   // Return a 200 OK response immediately to acknowledge receipt
   res.status(200).send('EVENT_RECEIVED');
@@ -997,7 +986,6 @@ app.post('/webhook', (req, res) => {
   
   // Log incoming webhook for debugging
   console.log('📩 Received webhook:', JSON.stringify(body, null, 2));
-
   try {
     // Check if this is a WhatsApp API event
     if (body.object === 'whatsapp_business_account') {
@@ -1336,7 +1324,6 @@ async function processMessage(phoneNumberId, from, message) {
   userSessions.set(from, session);
   console.log(`💾 Updated session for ${from}, new step: ${session.context.step}`);
 }
-
 /**
  * Send the main menu with options
  */
@@ -1417,7 +1404,6 @@ async function sendMainMenu(phoneNumberId, from) {
     );
   }
 }
-
 /**
  * Send property type selection buttons
  */
@@ -1474,7 +1460,6 @@ async function sendPropertyTypeOptions(phoneNumberId, from, action) {
         }
       }
     };
-
     console.log(`📤 Property type options payload: ${JSON.stringify(payload, null, 2)}`);
     
     const response = await fetch(url, {
@@ -1510,7 +1495,6 @@ async function sendPropertyTypeOptions(phoneNumberId, from, action) {
     );
   }
 }
-
 /**
  * Send bedroom options
  */
@@ -1556,7 +1540,6 @@ async function sendBedroomOptions(phoneNumberId, from) {
         }
       }
     };
-
     console.log(`📤 Bedroom options payload: ${JSON.stringify(payload, null, 2)}`);
     
     const response = await fetch(url, {
@@ -1590,7 +1573,6 @@ async function sendBedroomOptions(phoneNumberId, from) {
     );
   }
 }
-
 /**
  * Send a summary of the user's preferences and next steps
  */
@@ -1601,31 +1583,30 @@ async function sendSummary(phoneNumberId, from, userData) {
   let summaryText = "Here's a summary of what you're looking for:\n\n";
   
   if (userData.intent === 'buy') {
-    summaryText += `🏠 *Interest*: Buying a property\n`;
-    summaryText += `📍 *Location*: ${userData.location}\n`;
-    summaryText += `💰 *Budget*: ${userData.budget}\n`;
-    summaryText += `🏢 *Property Type*: ${userData.propertyType || 'Not specified'}\n`;
-    summaryText += `🛏️ *Bedrooms*: ${userData.bedrooms || 'Not specified'}\n\n`;
+    summaryText += `🏠 Interest: Buying a property\n`;
+    summaryText += `📍 Location: ${userData.location}\n`;
+    summaryText += `💰 Budget: ${userData.budget}\n`;
+    summaryText += `🏢 Property Type: ${userData.propertyType || 'Not specified'}\n`;
+    summaryText += `🛏️ Bedrooms: ${userData.bedrooms || 'Not specified'}\n\n`;
     summaryText += "Based on your preferences, we'll find some great properties for you!";
   } else if (userData.intent === 'rent') {
-    summaryText += `🏠 *Interest*: Renting a property\n`;
-    summaryText += `📍 *Location*: ${userData.location}\n`;
-    summaryText += `💰 *Monthly Budget*: ${userData.budget}\n`;
-    summaryText += `🏢 *Property Type*: ${userData.propertyType || 'Not specified'}\n`;
-    summaryText += `🛏️ *Bedrooms*: ${userData.bedrooms || 'Not specified'}\n\n`;
+    summaryText += `🏠 Interest: Renting a property\n`;
+    summaryText += `📍 Location: ${userData.location}\n`;
+    summaryText += `💰 Monthly Budget: ${userData.budget}\n`;
+    summaryText += `🏢 Property Type: ${userData.propertyType || 'Not specified'}\n`;
+    summaryText += `🛏️ Bedrooms: ${userData.bedrooms || 'Not specified'}\n\n`;
     summaryText += "We'll help you find the perfect rental property!";
   } else if (userData.intent === 'sell') {
-    summaryText += `🏠 *Interest*: Selling a property\n`;
-    summaryText += `🏢 *Property Type*: ${userData.propertyType || 'Not specified'}\n`;
-    summaryText += `📍 *Location*: ${userData.location}\n`;
-    summaryText += `💰 *Asking Price*: ${userData.askingPrice}\n\n`;
+    summaryText += `🏠 Interest: Selling a property\n`;
+    summaryText += `🏢 Property Type: ${userData.propertyType || 'Not specified'}\n`;
+    summaryText += `📍 Location: ${userData.location}\n`;
+    summaryText += `💰 Asking Price: ${userData.askingPrice}\n\n`;
     summaryText += "We'll help you sell your property at the best price!";
   }
   
   await sendTextMessage(phoneNumberId, from, summaryText);
   await sendFollowUpOptions(phoneNumberId, from);
 }
-
 /**
  * Send follow-up options after summary
  */
@@ -1664,7 +1645,6 @@ async function sendFollowUpOptions(phoneNumberId, from) {
         }
       }
     };
-
     console.log(`📤 Follow-up options payload: ${JSON.stringify(payload, null, 2)}`);
     
     const response = await fetch(url, {
@@ -1696,12 +1676,11 @@ async function sendFollowUpOptions(phoneNumberId, from) {
       "Please type your choice."
     );
   }
-}
-
-/**
+ }
+ /**
  * Function to send a text WhatsApp message
  */
-async function sendTextMessage(phoneNumberId, to, message) {
+ async function sendTextMessage(phoneNumberId, to, message) {
   console.log(`📤 Sending text message to ${to}: ${message.substring(0, 50)}${message.length > 50 ? '...' : ''}`);
   const url = `https://graph.facebook.com/${WHATSAPP_API_VERSION}/${phoneNumberId}/messages`;
   
@@ -1712,7 +1691,6 @@ async function sendTextMessage(phoneNumberId, to, message) {
       type: 'text',
       text: { body: message }
     };
-
     console.log(`📤 Text message payload: ${JSON.stringify(payload, null, 2)}`);
     console.log(`📤 Using URL: ${url}`);
     
@@ -1738,10 +1716,9 @@ async function sendTextMessage(phoneNumberId, to, message) {
     console.error('❌ Error in sendTextMessage:', error);
     throw error;
   }
-}
-
-// Add a test endpoint to manually send a message
-app.get('/test-message', async (req, res) => {
+ }
+ // Add a test endpoint to manually send a message
+ app.get('/test-message', async (req, res) => {
   console.log('🧪 Test message endpoint called');
   const to = req.query.to; // The phone number to send to
   
@@ -1769,11 +1746,9 @@ app.get('/test-message', async (req, res) => {
     console.error('❌ Test message error:', error);
     res.status(500).json({ error: error.message });
   }
-});
-
-
-// Add an environment check endpoint
-app.get('/check-env', (req, res) => {
+ });
+ // Add an environment check endpoint
+ app.get('/check-env', (req, res) => {
   const adminPassword = req.query.password;
   
   if (adminPassword !== (process.env.ADMIN_PASSWORD || 'admin123')) {
@@ -1791,12 +1766,11 @@ app.get('/check-env', (req, res) => {
     PORT: PORT,
     active_sessions: userSessions.size
   });
-});
-
-/**
+ });
+ /**
  * Periodically clean up expired sessions
  */
-setInterval(() => {
+ setInterval(() => {
   const now = Date.now();
   let expiredCount = 0;
   
@@ -1811,10 +1785,9 @@ setInterval(() => {
   if (expiredCount > 0) {
     console.log(`⏰ Cleaned up ${expiredCount} expired sessions. Remaining: ${userSessions.size}`);
   }
-}, 5 * 60 * 1000); // Run every 5 minutes
-
-// Health check endpoint
-app.get('/health', (req, res) => {
+ }, 5 * 60 * 1000); // Run every 5 minutes
+ // Health check endpoint
+ app.get('/health', (req, res) => {
   const status = {
     status: 'ok',
     timestamp: new Date().toISOString(),
@@ -1825,10 +1798,9 @@ app.get('/health', (req, res) => {
   
   console.log(`💓 Health check: ${JSON.stringify(status)}`);
   res.status(200).json(status);
-});
-
-// Debug endpoint to view active sessions (password protected)
-app.get('/debug/sessions', (req, res) => {
+ });
+ // Debug endpoint to view active sessions (password protected)
+ app.get('/debug/sessions', (req, res) => {
   const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
   const providedPassword = req.query.password;
   
@@ -1846,14 +1818,13 @@ app.get('/debug/sessions', (req, res) => {
   
   console.log(`🔍 Debug sessions accessed, active sessions: ${sessions.length}`);
   res.json({ sessions });
-});
-
-// Start the server
-app.listen(PORT, () => {
+ });
+ // Start the server
+ app.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
   console.log(`📡 Webhook URL: http://localhost:${PORT}/webhook`);
   console.log(`💓 Health check: http://localhost:${PORT}/health`);
   console.log(`🔍 Debug sessions: http://localhost:${PORT}/debug/sessions?password=admin123`);
   console.log(`🧪 Test message: http://localhost:${PORT}/test-message?to=PHONE_NUMBER`);
   console.log(`🔧 Environment check: http://localhost:${PORT}/check-env?password=admin123`);
-});
+ });
