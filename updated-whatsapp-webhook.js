@@ -1717,36 +1717,39 @@ async function sendFollowUpOptions(phoneNumberId, from) {
     throw error;
   }
  }
- // Add a test endpoint to manually send a message
- app.get('/test-message', async (req, res) => {
-  console.log('🧪 Test message endpoint called');
-  const to = req.query.to; // The phone number to send to
+ app.get('/test-template', async (req, res) => {
+  const to = req.query.to;
   
   if (!to) {
-    console.log('❌ Test message failed: Missing "to" parameter');
     return res.status(400).json({ error: 'Missing "to" parameter' });
   }
   
   try {
-    // Use the phone number ID from environment variables
-    if (!WHATSAPP_PHONE_NUMBER_ID) {
-      throw new Error('WHATSAPP_PHONE_NUMBER_ID environment variable is not set');
-    }
+    // Use your approved template
+    const result = await fetch(`https://graph.facebook.com/${WHATSAPP_API_VERSION}/${WHATSAPP_PHONE_NUMBER_ID}/messages`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${WHATSAPP_ACCESS_TOKEN}`
+      },
+      body: JSON.stringify({
+        messaging_product: 'whatsapp',
+        to: to,
+        type: 'template',
+        template: {
+          name: 'hello_world', // Replace with your approved template name
+          language: { code: 'en_US' }
+        }
+      })
+    });
     
-    // Send a test message
-    const result = await sendTextMessage(
-      WHATSAPP_PHONE_NUMBER_ID, 
-      to, 
-      "This is a test message from your Real Estate Assistant!"
-    );
-    
-    console.log('✅ Test message sent successfully');
-    res.json({ success: true, result });
+    const data = await result.json();
+    res.json({ success: true, result: data });
   } catch (error) {
-    console.error('❌ Test message error:', error);
     res.status(500).json({ error: error.message });
   }
- });
+});
+
  // Add an environment check endpoint
  app.get('/check-env', (req, res) => {
   const adminPassword = req.query.password;
