@@ -287,6 +287,26 @@ app.get('/api/conversations/:phoneNumber/messages', async (req, res) => {
   }
 });
 
+app.get('/webhook/config-check', (req, res) => {
+  res.json({
+    server_status: 'running',
+    webhook_url: 'https://whatsapp-webhook-w7a3.onrender.com/webhook',
+    expecting_webhook_fields: [
+      'messages',              // ← THIS IS CRITICAL
+      'messaging_postbacks',
+      'message_deliveries', 
+      'message_reads'
+    ],
+    verify_in_meta_dashboard: {
+      step1: 'Go to Meta App Dashboard',
+      step2: 'Navigate to WhatsApp > Configuration',
+      step3: 'Click on Webhook',
+      step4: 'Ensure "messages" field is subscribed',
+      step5: 'Check Callback URL matches exactly'
+    }
+  });
+});
+
 // Mark conversation as read
 app.put('/api/conversations/:phoneNumber/read', async (req, res) => {
   try {
