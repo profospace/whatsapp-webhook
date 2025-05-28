@@ -6,14 +6,14 @@ import mongoose from 'mongoose';
 import { WebSocketServer } from 'ws';
 import http from 'http';
 
-// Import models (convert these to ES modules format)
+// Load environment variables
+dotenv.config();
+
+// Import models - ONLY ONCE
 import ChatbotSettings from './models/ChatbotSettings.js';
 import UserEngagement from './models/UserEngagement.js';
 import Conversation from './models/Conversation.js';
 import Message from './models/Message.js';
-
-// Load environment variables
-dotenv.config();
 
 // Initialize express app
 const app = express();
@@ -28,21 +28,14 @@ app.use(cors());
 app.use(bodyParser.json());
 
 // MongoDB Connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/whatsapp-dashboard', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-}).then(() => {
-  console.log('✅ Connected to MongoDB');
-}).catch(err => {
-  console.error('❌ MongoDB connection error:', err);
-  process.exit(1);
-});
-
-// Import models (convert these to ES modules format)
-import ChatbotSettings from './models/ChatbotSettings.js';
-import UserEngagement from './models/UserEngagement.js';
-import Conversation from './models/Conversation.js';
-import Message from './models/Message.js';
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/whatsapp-dashboard')
+  .then(() => {
+    console.log('✅ Connected to MongoDB');
+  })
+  .catch(err => {
+    console.error('❌ MongoDB connection error:', err);
+    process.exit(1);
+  });
 
 // WebSocket clients tracking
 const wsClients = new Set();
@@ -86,7 +79,7 @@ app.get('/webhook', (req, res) => {
   console.log('🔍 Webhook verification request');
   
   if (mode && token) {
-    if (mode === 'subscribe' && token === process.env.VERIFY_TOKEN) {
+    if (mode === 'subscribe' && token === process.env.WHATSAPP_VERIFY_TOKEN) {
       console.log('✅ WEBHOOK_VERIFIED');
       return res.status(200).send(challenge);
     }
@@ -431,17 +424,3 @@ server.listen(PORT, () => {
   console.log(`🔌 WebSocket URL: ws://localhost:${PORT}`);
   console.log(`💓 Health check: http://localhost:${PORT}/health`);
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
