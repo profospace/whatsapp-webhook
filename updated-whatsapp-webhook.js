@@ -1,4 +1,3 @@
-
 import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
@@ -6,6 +5,12 @@ import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import { WebSocketServer } from 'ws';
 import http from 'http';
+
+// Import models (convert these to ES modules format)
+import ChatbotSettings from './models/ChatbotSettings.js';
+import UserEngagement from './models/UserEngagement.js';
+import Conversation from './models/Conversation.js';
+import Message from './models/Message.js';
 
 // Load environment variables
 dotenv.config();
