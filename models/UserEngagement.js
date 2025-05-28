@@ -1,5 +1,5 @@
 // models/UserEngagement.js
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const userEngagementSchema = new mongoose.Schema({
   phoneNumber: { 
@@ -29,5 +29,5 @@ userEngagementSchema.methods.checkIfInWindow = function() {
   return timeSinceLastMessage < (24 * 60 * 60 * 1000); // 24 hours in milliseconds
 };
 
-module.exports = mongoose.model('UserEngagement', userEngagementSchema);
 
+export default mongoose.model('UserEngagement', userEngagementSchema);

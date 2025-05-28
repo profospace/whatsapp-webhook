@@ -1,5 +1,5 @@
 // models/ChatbotSettings.js
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const quickReplySchema = new mongoose.Schema({
   id: Number,
@@ -71,4 +71,4 @@ chatbotSettingsSchema.statics.getSettings = async function() {
   return settings;
 };
 
-module.exports = mongoose.model('ChatbotSettings', chatbotSettingsSchema);
+export default mongoose.model('ChatbotSettings', chatbotSettingsSchema);
