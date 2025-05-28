@@ -1,23 +1,25 @@
 {
-    "name": "simple-whatsapp-webhook",
+    "name": "whatsapp-webhook-server",
     "version": "1.0.0",
-    "description": "Simple WhatsApp webhook that responds to messages",
+    "description": "WhatsApp Business API Webhook Server",
     "main": "updated-whatsapp-webhook.js",
+    "type": "module",
     "scripts": {
-        "start": "node updated-whatsapp-webhook.js",
-        "dev": "nodemon updated-whatsapp-webhook.js"
+      "start": "node updated-whatsapp-webhook.js",
+      "dev": "nodemon updated-whatsapp-webhook.js"
     },
     "dependencies": {
-        "body-parser": "^1.20.3",
-        "dotenv": "^16.4.7",
-        "express": "^4.21.2",
-        "node-fetch": "^3.3.2"
+      "express": "^4.19.2",
+      "body-parser": "^1.20.2",
+      "cors": "^2.8.5",
+      "dotenv": "^16.4.5",
+      "mongoose": "^8.0.0",
+      "ws": "^8.16.0"
     },
     "devDependencies": {
-        "nodemon": "^3.0.1"
+      "nodemon": "^3.0.1"
     },
     "engines": {
-        "node": ">=16.0.0"
-    },
-    "type": "module"
-}
+      "node": ">=14.0.0"
+    }
+  }

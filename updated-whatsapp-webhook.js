@@ -81,7 +81,7 @@ app.get('/webhook', (req, res) => {
   console.log('🔍 Webhook verification request');
   
   if (mode && token) {
-    if (mode === 'subscribe' && token === process.env.WHATSAPP_VERIFY_TOKEN) {
+    if (mode === 'subscribe' && token === process.env.VERIFY_TOKEN) {
       console.log('✅ WEBHOOK_VERIFIED');
       return res.status(200).send(challenge);
     }
