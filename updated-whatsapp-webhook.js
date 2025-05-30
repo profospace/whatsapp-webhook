@@ -74,24 +74,41 @@ const broadcastToClients = (data) => {
 // =================== Webhook Routes ===================
 
 // GET route for webhook verification
+// app.get('/webhook', (req, res) => {
+//   const mode = req.query['hub.mode'];
+//   const token = req.query['hub.verify_token'];
+//   const challenge = req.query['hub.challenge'];
+  
+//   console.log('🔍 Webhook verification request');
+  
+//   if (mode && token) {
+//     if (mode === 'subscribe' && token === process.env.WHATSAPP_VERIFY_TOKEN) {
+//       console.log('✅ WEBHOOK_VERIFIED');
+//       return res.status(200).send(challenge);
+//     }
+//     console.log('❌ Verification failed - token mismatch');
+//     return res.sendStatus(403);
+//   }
+  
+//   return res.status(400).send('Please pass the correct parameters');
+// });
+
 app.get('/webhook', (req, res) => {
+  const VERIFY_TOKEN = process.env.WHATSAPP_TOKEN || 'your_verify_token_here';
+
   const mode = req.query['hub.mode'];
   const token = req.query['hub.verify_token'];
   const challenge = req.query['hub.challenge'];
-  
-  console.log('🔍 Webhook verification request');
-  
-  if (mode && token) {
-    if (mode === 'subscribe' && token === process.env.WHATSAPP_VERIFY_TOKEN) {
-      console.log('✅ WEBHOOK_VERIFIED');
-      return res.status(200).send(challenge);
-    }
-    console.log('❌ Verification failed - token mismatch');
-    return res.sendStatus(403);
+
+  if (mode && token === VERIFY_TOKEN) {
+    console.log('✅ Webhook verified successfully');
+    res.status(200).send(challenge);
+  } else {
+    console.error('❌ Webhook verification failed');
+    res.sendStatus(403);
   }
-  
-  return res.status(400).send('Please pass the correct parameters');
 });
+
 
 // POST route for webhook events (receiving messages)
 // app.post('/webhook', async (req, res) => {
@@ -612,7 +629,7 @@ app.get('/health', async (req, res) => {
 });
 
 // Start the server
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0' , () => {
   console.log(`🚀 Server is running on port ${PORT}`);
   console.log(`📡 Webhook URL: http://localhost:${PORT}/webhook`);
   console.log(`🔌 WebSocket URL: ws://localhost:${PORT}`);
