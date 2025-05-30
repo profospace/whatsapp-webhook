@@ -224,48 +224,154 @@ app.get('/webhook', (req, res) => {
 //   }
 // });
 
+// app.post('/webhook', async (req, res) => {
+//   console.log('webhook post endpoint run received');
+//   // Return 200 immediately
+//   res.status(200).send('EVENT_RECEIVED');
+//   console.log(':inbox_tray: Webhook received:', JSON.stringify(req.body, null, 2));
+//   const body = req.body;
+//   try {
+//     if (body.object === 'whatsapp_business_account') {
+//       const entry = body.entry?.[0];
+//       const changes = entry?.changes?.[0];
+//       const value = changes?.value;
+//       const field = changes?.field;
+//       console.log(`:clipboard: Webhook field: ${field}`);
+//       // Handle different webhook fields
+//       switch (field) {
+//         case 'messages':
+//           // Your existing message handling code
+//           if (value.messages?.[0]) {
+//             const message = value.messages[0];
+//             console.log(`:incoming_envelope: New message from ${message.from}: ${message.text?.body}`);
+//             // ... your existing message processing
+//           }
+//           break;
+//         case 'message_status':
+//           // Handle status updates
+//           if (value.statuses?.[0]) {
+//             const status = value.statuses[0];
+//             console.log(`:bar_chart: Status update for ${status.id}: ${status.status}`);
+//           }
+//           break;
+//         case 'message_echoes':
+//           // Handle echoes (messages you sent)
+//           console.log(':outbox_tray: Message echo received');
+//           break;
+//         default:
+//           console.log(`:warning: Unhandled webhook field: ${field}`);
+//       }
+//     }
+//   } catch (error) {
+//     console.error(':x: Error processing webhook:', error);
+//   }
+// });
+
+// Replace your existing webhook POST handler with this
 app.post('/webhook', async (req, res) => {
-  // Return 200 immediately
+  // Return 200 OK immediately - CRITICAL!
   res.status(200).send('EVENT_RECEIVED');
-  console.log(':inbox_tray: Webhook received:', JSON.stringify(req.body, null, 2));
+  // Enhanced logging
+  console.log('\n=== WEBHOOK RECEIVED ===');
+  console.log('Time:', new Date().toISOString());
+  console.log('Headers:', {
+    'x-hub-signature': req.headers['x-hub-signature'] ? 'Present' : 'Missing',
+    'content-type': req.headers['content-type'],
+  });
   const body = req.body;
+  console.log('Full body:', JSON.stringify(body, null, 2));
   try {
     if (body.object === 'whatsapp_business_account') {
       const entry = body.entry?.[0];
       const changes = entry?.changes?.[0];
-      const value = changes?.value;
       const field = changes?.field;
-      console.log(`:clipboard: Webhook field: ${field}`);
-      // Handle different webhook fields
-      switch (field) {
-        case 'messages':
-          // Your existing message handling code
-          if (value.messages?.[0]) {
-            const message = value.messages[0];
-            console.log(`:incoming_envelope: New message from ${message.from}: ${message.text?.body}`);
-            // ... your existing message processing
-          }
-          break;
-        case 'message_status':
-          // Handle status updates
-          if (value.statuses?.[0]) {
-            const status = value.statuses[0];
-            console.log(`:bar_chart: Status update for ${status.id}: ${status.status}`);
-          }
-          break;
-        case 'message_echoes':
-          // Handle echoes (messages you sent)
-          console.log(':outbox_tray: Message echo received');
-          break;
-        default:
-          console.log(`:warning: Unhandled webhook field: ${field}`);
+      const value = changes?.value;
+      console.log(`Field type: ${field}`);
+      // Handle messages
+      if (field === 'messages' && value.messages?.[0]) {
+        const message = value.messages[0];
+        const from = message.from;
+        console.log(`:incoming_envelope: NEW MESSAGE from ${from}`);
+        console.log(`Type: ${message.type}`);
+        console.log(`Content: ${message.text?.body || '[non-text]'}`);
+        // Your existing message handling code...
+      }
+      // Handle statuses
+      else if (value.statuses?.[0]) {
+        const status = value.statuses[0];
+        console.log(`:bar_chart: Status update: ${status.status} for message ${status.id}`);
+      }
+      // Handle other events
+      else {
+        console.log('Other event type:', field);
       }
     }
   } catch (error) {
     console.error(':x: Error processing webhook:', error);
   }
+  console.log('=== END WEBHOOK ===\n');
 });
 
+
+
+// Add this to your webhook server to initiate conversations
+app.post('/api/send-message', async (req, res) => {
+  const { to, message } = req.body;
+  try {
+    // Replace with your actual WhatsApp API credentials
+    const response = await fetch(`https://graph.facebook.com/v18.0/${process.env.PHONE_NUMBER_ID}/messages`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.WHATSAPP_VERIFY_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        messaging_product: 'whatsapp',
+        recipient_type: 'individual',
+        to: to,
+        type: 'text',
+        text: {
+          preview_url: false,
+          body: message
+        }
+      })
+    });
+    const data = await response.json();
+    console.log('Message sent:', data);
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error('Error sending message:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/send-template', async (req, res) => {
+  const { to } = req.body;
+  try {
+    const response = await fetch(`https://graph.facebook.com/v18.0/${process.env.PHONE_NUMBER_ID}/messages`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.WHATSAPP_VERIFY_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        messaging_product: 'whatsapp',
+        to: to,
+        type: 'template',
+        template: {
+          name: 'hello_world', // Use your approved template name
+          language: {
+            code: 'en_US'
+          }
+        }
+      })
+    });
+    const data = await response.json();
+    res.json({ success: true, data });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 // =================== Chatbot API Routes ===================
 
 // Get chatbot settings
