@@ -780,7 +780,7 @@ import express from 'express'
 import axios from 'axios'
 
 const WHATSAPP_ACCESS_TOKEN = process.env.WHATSAPP_TOKEN
-const WEBHOOK_VERIFY_TOKEN = process.env.WEBHOOK_VERIFY_TOKEN
+const WEBHOOK_VERIFY_TOKEN = process.env.WEBHOOK_VERIFY_TOKEN || 'working_profo_token'
 const PORT = process.env.PORT || 3000
 const app = express()
 app.use(express.json())
