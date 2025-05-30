@@ -776,8 +776,11 @@
 // });
 
 
-import express from 'express'
-import axios from 'axios'
+// import express from 'express'
+// import axios from 'axios'
+const express = require('express')
+const axios = require('axios');
+require('dotenv').config();
 
 const WHATSAPP_ACCESS_TOKEN = process.env.WHATSAPP_TOKEN
 const WEBHOOK_VERIFY_TOKEN = process.env.WEBHOOK_VERIFY_TOKEN || 'working_profo_token'
@@ -900,7 +903,7 @@ async function replyMessage(to, body, messageId) {
 }
 
 async function sendList(to) {
-  await axios({
+  const sendListRes = await axios({
     url: 'https://graph.facebook.com/v18.0/598241500035903/messages',
     method: 'post',
     headers: {
@@ -955,6 +958,8 @@ async function sendList(to) {
       }
     })
   })
+
+  console.log("sendListRedsponse", sendListRes.data);
 }
 
 async function sendReplyButtons(to) {
