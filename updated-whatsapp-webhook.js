@@ -782,7 +782,7 @@ const express = require('express')
 const axios = require('axios');
 require('dotenv').config();
 
-const WHATSAPP_ACCESS_TOKEN = process.env.WHATSAPP_TOKEN
+const WHATSAPP_ACCESS_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN
 const WEBHOOK_VERIFY_TOKEN = process.env.WEBHOOK_VERIFY_TOKEN || 'working_profo_token'
 const PORT = process.env.PORT || 3000
 const app = express()
