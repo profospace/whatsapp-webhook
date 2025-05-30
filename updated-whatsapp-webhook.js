@@ -40,6 +40,8 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/whatsapp-
 // WebSocket clients tracking
 const wsClients = new Set();
 
+console.log("wsClients", wsClients)
+
 // WebSocket connection handling
 wss.on('connection', (ws) => {
   console.log('✅ New WebSocket client connected');
@@ -61,6 +63,7 @@ wss.on('connection', (ws) => {
 // Broadcast message to all connected clients
 const broadcastToClients = (data) => {
   const message = JSON.stringify(data);
+  console.log('📡 Broadcasting message to clients:', message);
   wsClients.forEach(client => {
     if (client.readyState === 1) { // WebSocket.OPEN
       client.send(message);
@@ -96,6 +99,8 @@ app.post('/webhook', async (req, res) => {
   res.status(200).send('EVENT_RECEIVED');
   
   const body = req.body;
+
+  console.log('📬 Webhook event received:', JSON.stringify(body, null, 2));
   
   try {
     if (body.object === 'whatsapp_business_account') {
@@ -112,6 +117,7 @@ app.post('/webhook', async (req, res) => {
           // Extract message content based on type
           if (messageType === 'text') {
             messageContent = message.text.body;
+            console
           } else if (messageType === 'interactive') {
             const interactiveType = message.interactive.type;
             
@@ -127,7 +133,7 @@ app.post('/webhook', async (req, res) => {
           console.log(`📨 Message from ${from}: ${messageContent}`);
           
           // Update user engagement
-          await UserEngagement.findOneAndUpdate(
+          const userEngagement =  await UserEngagement.findOneAndUpdate(
             { phoneNumber: from },
             { 
               phoneNumber: from,
@@ -136,6 +142,8 @@ app.post('/webhook', async (req, res) => {
             },
             { upsert: true, new: true }
           );
+
+          console.log(`👤 User engagement updated for ${from}:`, userEngagement);
           
           // Update or create conversation
           let conversation = await Conversation.findOne({ phoneNumber: from });
@@ -146,6 +154,7 @@ app.post('/webhook', async (req, res) => {
               lastMessageTime: new Date(),
               unreadCount: 1
             });
+            console.log(`📖 Created new conversation for ${from}`);
           } else {
             conversation.lastMessage = messageContent;
             conversation.lastMessageTime = new Date();
@@ -154,7 +163,7 @@ app.post('/webhook', async (req, res) => {
           }
           
           // Save message
-          await Message.create({
+          const savedMessage = await Message.create({
             conversationId: conversation._id,
             phoneNumber: from,
             messageId: message.id,
@@ -163,6 +172,8 @@ app.post('/webhook', async (req, res) => {
             text: messageContent
           });
           
+          console.log(`💬 Saved message ${savedMessage.id} for conversation ${conversation._id}`);
+
           // Broadcast to WebSocket clients
           broadcastToClients({
             type: 'message',
@@ -191,11 +202,13 @@ app.post('/webhook', async (req, res) => {
         // Handle message status updates
         else if (value.statuses?.[0]) {
           const status = value.statuses[0];
-          
-          await Message.findOneAndUpdate(
+
+          const updatedMessage = await Message.findOneAndUpdate(
             { messageId: status.id },
             { status: status.status }
           );
+
+          console.log(`📦 Updated message status for ${status.id}: ${status.status}`);
           
           broadcastToClients({
             type: 'status_update',
@@ -261,6 +274,8 @@ app.get('/api/conversations', async (req, res) => {
     const conversations = await Conversation.find()
       .sort({ lastMessageTime: -1 })
       .limit(50);
+
+    console.log(`📖 Fetched ${conversations.length} and ${conversations} conversations`);
     res.json(conversations);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -272,6 +287,9 @@ app.get('/api/conversations/:phoneNumber/messages', async (req, res) => {
   try {
     const { phoneNumber } = req.params;
     const conversation = await Conversation.findOne({ phoneNumber });
+
+    console.log(`📖 Fetching messages for conversation: ${phoneNumber}`);
+    console.log(`📖 Conversation found: ${conversation}`);
     
     if (!conversation) {
       return res.json([]);
@@ -280,6 +298,9 @@ app.get('/api/conversations/:phoneNumber/messages', async (req, res) => {
     const messages = await Message.find({ conversationId: conversation._id })
       .sort({ createdAt: 1 })
       .limit(100);
+
+      console.log(`📖 Fetched ${messages.length} messages for conversation: ${phoneNumber}`);
+    console.log(`📖 Messages: ${messages}`);
       
     res.json(messages);
   } catch (error) {
@@ -311,10 +332,15 @@ app.get('/webhook/config-check', (req, res) => {
 app.put('/api/conversations/:phoneNumber/read', async (req, res) => {
   try {
     const { phoneNumber } = req.params;
-    await Conversation.findOneAndUpdate(
+    const conversation = await Conversation.findOneAndUpdate(
       { phoneNumber },
       { unreadCount: 0 }
     );
+
+    console.log(`📖 Marked conversation as read: ${phoneNumber}`);
+    console.log(`📖 Updated conversation: ${conversation}`);
+
+
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
