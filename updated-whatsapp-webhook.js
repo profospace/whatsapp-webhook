@@ -793,6 +793,7 @@ app.get('/', (req, res) => {
 })
 
 app.get('/webhook', (req, res) => {
+  console.log("Webhook hit get endpoint")
   const mode = req.query['hub.mode']
   const challenge = req.query['hub.challenge']
   const token = req.query['hub.verify_token']
@@ -805,7 +806,10 @@ app.get('/webhook', (req, res) => {
 })
 
 app.post('/webhook', async (req, res) => {
+  console.log("Webhook hit post endpoint")
+
   const { entry } = req.body
+  console.log('Received webhook entry:', JSON.stringify(entry, null, 2))
 
   if (!entry || entry.length === 0) {
     return res.status(400).send('Invalid Request')
@@ -1009,6 +1013,6 @@ async function sendReplyButtons(to) {
   })
 }
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0' ,() => {
   console.log('Server started on port 3000')
 })
