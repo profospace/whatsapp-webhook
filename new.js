@@ -3,7 +3,7 @@ import axios from 'axios'
 
 const WHATSAPP_ACCESS_TOKEN = process.env.WHATSAPP_TOKEN 
 const WEBHOOK_VERIFY_TOKEN = process.env.WEBHOOK_VERIFY_TOKEN
-
+const PORT = process.env.PORT || 3000
 const app = express()
 app.use(express.json())
 
@@ -226,6 +226,6 @@ async function sendReplyButtons(to) {
     })
 }
 
-app.listen(3000, () => {
+app.listen(PORT, () => {
     console.log('Server started on port 3000')
 })
