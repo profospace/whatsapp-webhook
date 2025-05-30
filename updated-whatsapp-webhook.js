@@ -94,133 +94,175 @@ app.get('/webhook', (req, res) => {
 });
 
 // POST route for webhook events (receiving messages)
-app.post('/webhook', async (req, res) => {
-  // Return 200 OK immediately
-  res.status(200).send('EVENT_RECEIVED');
+// app.post('/webhook', async (req, res) => {
+//   // Return 200 OK immediately
+//   res.status(200).send('EVENT_RECEIVED');
   
-  const body = req.body;
+//   const body = req.body;
 
-  console.log('📬 Webhook event received:', JSON.stringify(body, null, 2));
+//   console.log('📬 Webhook event received:', JSON.stringify(body, null, 2));
   
+//   try {
+//     if (body.object === 'whatsapp_business_account') {
+//       if (body.entry?.[0]?.changes?.[0]?.value) {
+//         const value = body.entry[0].changes[0].value;
+        
+//         // Handle incoming messages
+//         if (value.messages?.[0]) {
+//           const message = value.messages[0];
+//           const from = message.from;
+//           let messageContent = '';
+//           let messageType = message.type;
+          
+//           // Extract message content based on type
+//           if (messageType === 'text') {
+//             messageContent = message.text.body;
+//             console
+//           } else if (messageType === 'interactive') {
+//             const interactiveType = message.interactive.type;
+            
+//             if (interactiveType === 'button_reply') {
+//               messageContent = message.interactive.button_reply.id;
+//             } else if (interactiveType === 'list_reply') {
+//               messageContent = message.interactive.list_reply.id;
+//             }
+//           } else {
+//             messageContent = `[${messageType} message]`;
+//           }
+          
+//           console.log(`📨 Message from ${from}: ${messageContent}`);
+          
+//           // Update user engagement
+//           const userEngagement =  await UserEngagement.findOneAndUpdate(
+//             { phoneNumber: from },
+//             { 
+//               phoneNumber: from,
+//               lastMessageTime: new Date(),
+//               $inc: { messageCount: 1 }
+//             },
+//             { upsert: true, new: true }
+//           );
+
+//           console.log(`👤 User engagement updated for ${from}:`, userEngagement);
+          
+//           // Update or create conversation
+//           let conversation = await Conversation.findOne({ phoneNumber: from });
+//           if (!conversation) {
+//             conversation = await Conversation.create({
+//               phoneNumber: from,
+//               lastMessage: messageContent,
+//               lastMessageTime: new Date(),
+//               unreadCount: 1
+//             });
+//             console.log(`📖 Created new conversation for ${from}`);
+//           } else {
+//             conversation.lastMessage = messageContent;
+//             conversation.lastMessageTime = new Date();
+//             conversation.unreadCount += 1;
+//             await conversation.save();
+//           }
+          
+//           // Save message
+//           const savedMessage = await Message.create({
+//             conversationId: conversation._id,
+//             phoneNumber: from,
+//             messageId: message.id,
+//             sender: 'user',
+//             type: messageType,
+//             text: messageContent
+//           });
+          
+//           console.log(`💬 Saved message ${savedMessage.id} for conversation ${conversation._id}`);
+
+//           // Broadcast to WebSocket clients
+//           broadcastToClients({
+//             type: 'message',
+//             from: from,
+//             message: messageContent,
+//             messageId: message.id,
+//             timestamp: new Date().toISOString()
+//           });
+          
+//           // Process with chatbot if enabled
+//           const chatbotSettings = await ChatbotSettings.getSettings();
+//           if (chatbotSettings.enabled) {
+//             const automatedReply = await processWithChatbot(from, messageContent, conversation);
+//             if (automatedReply) {
+//               // The dashboard will handle sending the actual message
+//               broadcastToClients({
+//                 type: 'chatbot_reply',
+//                 to: from,
+//                 reply: automatedReply,
+//                 delay: chatbotSettings.welcomeMessage.delay || 1000
+//               });
+//             }
+//           }
+//         }
+        
+//         // Handle message status updates
+//         else if (value.statuses?.[0]) {
+//           const status = value.statuses[0];
+
+//           const updatedMessage = await Message.findOneAndUpdate(
+//             { messageId: status.id },
+//             { status: status.status }
+//           );
+
+//           console.log(`📦 Updated message status for ${status.id}: ${status.status}`);
+          
+//           broadcastToClients({
+//             type: 'status_update',
+//             messageId: status.id,
+//             status: status.status,
+//             timestamp: status.timestamp
+//           });
+//         }
+//       }
+//     }
+//   } catch (error) {
+//     console.error('❌ Error processing webhook:', error);
+//   }
+// });
+
+app.post('/webhook', async (req, res) => {
+  // Return 200 immediately
+  res.status(200).send('EVENT_RECEIVED');
+  console.log(':inbox_tray: Webhook received:', JSON.stringify(req.body, null, 2));
+  const body = req.body;
   try {
     if (body.object === 'whatsapp_business_account') {
-      if (body.entry?.[0]?.changes?.[0]?.value) {
-        const value = body.entry[0].changes[0].value;
-        
-        // Handle incoming messages
-        if (value.messages?.[0]) {
-          const message = value.messages[0];
-          const from = message.from;
-          let messageContent = '';
-          let messageType = message.type;
-          
-          // Extract message content based on type
-          if (messageType === 'text') {
-            messageContent = message.text.body;
-            console
-          } else if (messageType === 'interactive') {
-            const interactiveType = message.interactive.type;
-            
-            if (interactiveType === 'button_reply') {
-              messageContent = message.interactive.button_reply.id;
-            } else if (interactiveType === 'list_reply') {
-              messageContent = message.interactive.list_reply.id;
-            }
-          } else {
-            messageContent = `[${messageType} message]`;
+      const entry = body.entry?.[0];
+      const changes = entry?.changes?.[0];
+      const value = changes?.value;
+      const field = changes?.field;
+      console.log(`:clipboard: Webhook field: ${field}`);
+      // Handle different webhook fields
+      switch (field) {
+        case 'messages':
+          // Your existing message handling code
+          if (value.messages?.[0]) {
+            const message = value.messages[0];
+            console.log(`:incoming_envelope: New message from ${message.from}: ${message.text?.body}`);
+            // ... your existing message processing
           }
-          
-          console.log(`📨 Message from ${from}: ${messageContent}`);
-          
-          // Update user engagement
-          const userEngagement =  await UserEngagement.findOneAndUpdate(
-            { phoneNumber: from },
-            { 
-              phoneNumber: from,
-              lastMessageTime: new Date(),
-              $inc: { messageCount: 1 }
-            },
-            { upsert: true, new: true }
-          );
-
-          console.log(`👤 User engagement updated for ${from}:`, userEngagement);
-          
-          // Update or create conversation
-          let conversation = await Conversation.findOne({ phoneNumber: from });
-          if (!conversation) {
-            conversation = await Conversation.create({
-              phoneNumber: from,
-              lastMessage: messageContent,
-              lastMessageTime: new Date(),
-              unreadCount: 1
-            });
-            console.log(`📖 Created new conversation for ${from}`);
-          } else {
-            conversation.lastMessage = messageContent;
-            conversation.lastMessageTime = new Date();
-            conversation.unreadCount += 1;
-            await conversation.save();
+          break;
+        case 'message_status':
+          // Handle status updates
+          if (value.statuses?.[0]) {
+            const status = value.statuses[0];
+            console.log(`:bar_chart: Status update for ${status.id}: ${status.status}`);
           }
-          
-          // Save message
-          const savedMessage = await Message.create({
-            conversationId: conversation._id,
-            phoneNumber: from,
-            messageId: message.id,
-            sender: 'user',
-            type: messageType,
-            text: messageContent
-          });
-          
-          console.log(`💬 Saved message ${savedMessage.id} for conversation ${conversation._id}`);
-
-          // Broadcast to WebSocket clients
-          broadcastToClients({
-            type: 'message',
-            from: from,
-            message: messageContent,
-            messageId: message.id,
-            timestamp: new Date().toISOString()
-          });
-          
-          // Process with chatbot if enabled
-          const chatbotSettings = await ChatbotSettings.getSettings();
-          if (chatbotSettings.enabled) {
-            const automatedReply = await processWithChatbot(from, messageContent, conversation);
-            if (automatedReply) {
-              // The dashboard will handle sending the actual message
-              broadcastToClients({
-                type: 'chatbot_reply',
-                to: from,
-                reply: automatedReply,
-                delay: chatbotSettings.welcomeMessage.delay || 1000
-              });
-            }
-          }
-        }
-        
-        // Handle message status updates
-        else if (value.statuses?.[0]) {
-          const status = value.statuses[0];
-
-          const updatedMessage = await Message.findOneAndUpdate(
-            { messageId: status.id },
-            { status: status.status }
-          );
-
-          console.log(`📦 Updated message status for ${status.id}: ${status.status}`);
-          
-          broadcastToClients({
-            type: 'status_update',
-            messageId: status.id,
-            status: status.status,
-            timestamp: status.timestamp
-          });
-        }
+          break;
+        case 'message_echoes':
+          // Handle echoes (messages you sent)
+          console.log(':outbox_tray: Message echo received');
+          break;
+        default:
+          console.log(`:warning: Unhandled webhook field: ${field}`);
       }
     }
   } catch (error) {
-    console.error('❌ Error processing webhook:', error);
+    console.error(':x: Error processing webhook:', error);
   }
 });
 
